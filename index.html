@@ -239,6 +239,7 @@ button,a,.btn,.tab,.check-item{user-select:none;pointer-events:all!important;cur
         <div class="fgrid">
           <div class="fg"><label>ناوی یەکە</label><input id="nu-name" placeholder="بەشی کۆمپیوتەر..."></div>
           <div class="fg"><label>جۆر</label><select id="nu-type"><option value="بەش">بەش</option><option value="هۆبە">هۆبە</option><option value="لیژنە">لیژنە</option><option value="ڕاگر">ڕاگر</option><option value="یاریدەدەر">یاریدەدەر</option></select></div>
+          <div class="fg"><label>رۆڵ</label><select id="nu-role"><option value="requester">بەش / هۆبە / لیژنە</option><option value="vp">یاریدەدەری ڕاگر</option><option value="president">ڕاگری پەیمانگا</option><option value="assigned">کارمەند</option></select></div>
           <div class="fg"><label>ئیمەیڵ</label><input id="nu-email" type="email" placeholder="dept@dukan.edu..."></div>
           <div class="fg"><label>پاسۆرد</label><input id="nu-pass" type="text" placeholder="پاسۆرد..."></div>
         </div>
@@ -485,6 +486,7 @@ button,a,.btn,.tab,.check-item{user-select:none;pointer-events:all!important;cur
     <input type="hidden" id="eu-id">
     <div class="fg"><label>ناوی یەکە</label><input id="eu-name"></div>
     <div class="fg"><label>جۆر</label><select id="eu-type"><option value="بەش">بەش</option><option value="هۆبە">هۆبە</option><option value="لیژنە">لیژنە</option><option value="ڕاگر">ڕاگر</option><option value="یاریدەدەر">یاریدەدەر</option></select></div>
+    <div class="fg"><label>رۆڵ</label><select id="eu-role"><option value="requester">بەش / هۆبە / لیژنە</option><option value="vp">یاریدەدەری ڕاگر</option><option value="president">ڕاگری پەیمانگا</option><option value="assigned">کارمەند</option></select></div>
     <div class="fg"><label>ئیمەیڵ</label><input id="eu-email" type="email"></div>
     <div class="fg"><label>پاسۆردی نوێ (بەتاڵ بهێڵە ئەگەر نەیگۆڕیت)</label><input id="eu-pass" type="text" placeholder="بەتاڵ بهێڵە..."></div>
     <div style="display:flex;gap:8px">
@@ -635,7 +637,8 @@ window.createUser=async function(){
   usnap.forEach(d=>{if(d.data().email===email)exists=true;});
   if(exists){alert('ئەم ئیمەیڵە پێشتر بەکارهاتووە');return;}
   const userId='user_'+uid();
-  await setDoc(doc(db,'users',userId),{name,email,password:pass,unitType:utype,role:'requester',createdAt:ts()});
+  const role=document.getElementById('nu-role').value;
+  await setDoc(doc(db,'users',userId),{name,email,password:pass,unitType:utype,role,createdAt:ts()});
   ['nu-name','nu-email','nu-pass'].forEach(id=>document.getElementById(id).value='');
   renderUsers();window.toast('✅ یوزەری نوێ دروستکرا: '+name);
 };
@@ -651,19 +654,20 @@ async function renderUsers(){
       <div style="font-size:11px;color:var(--ink4);margin-top:2px;font-family:monospace">📧 ${u.email} · 🔑 ${u.password}</div></div>
     </div>
     <div style="display:flex;gap:6px">
-      <button class="btn btn-sm" style="color:var(--info);border-color:var(--info)" onclick="openEU('${u.id}','${u.name}','${u.unitType||'بەش'}','${u.email}')">✏️</button>
+      <button class="btn btn-sm" style="color:var(--info);border-color:var(--info)" onclick="openEU('${u.id}','${u.name}','${u.unitType||'بەش'}','${u.email}','${u.role||'requester'}')">✏️</button>
       <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">🗑</button>
     </div>
   </div>`).join('');
 }
-window.openEU=function(id,name,utype,email){document.getElementById('eu-id').value=id;document.getElementById('eu-name').value=name;document.getElementById('eu-type').value=utype;document.getElementById('eu-email').value=email;document.getElementById('eu-pass').value='';document.getElementById('eu-modal').classList.add('open');};
+window.openEU=function(id,name,utype,email,role){document.getElementById('eu-id').value=id;document.getElementById('eu-name').value=name;document.getElementById('eu-type').value=utype;document.getElementById('eu-email').value=email;document.getElementById('eu-pass').value='';document.getElementById('eu-role').value=role||'requester';document.getElementById('eu-modal').classList.add('open');};
 window.saveEU=async function(){
   const id=document.getElementById('eu-id').value;
   const name=document.getElementById('eu-name').value.trim();
   const utype=document.getElementById('eu-type').value;
+  const role=document.getElementById('eu-role').value;
   const pass=document.getElementById('eu-pass').value.trim();
   if(!name){alert('ناو پڕ بکەرەوە');return;}
-  const data={name,unitType:utype};if(pass)data.password=pass;
+  const data={name,unitType:utype,role};if(pass)data.password=pass;
   await updateDoc(doc(db,'users',id),data);closeEU();renderUsers();window.toast('✅ نوێکرایەوە');
 };
 window.closeEU=()=>document.getElementById('eu-modal').classList.remove('open');
